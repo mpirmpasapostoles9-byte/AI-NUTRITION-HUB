@@ -2,17 +2,17 @@ import streamlit as st
 import g4f
 import pyrebase
 
-# --- SEO CONFIG (Αυτό διαβάζει η Google) ---
+# --- SEO & GOOGLE VERIFICATION (Αυτό διαβάζει η Google) ---
 st.set_page_config(
     page_title="AI NUTRITION HUB | Birbas Professional Analysis",
     page_icon="🥗",
-    layout="wide",
-    menu_items={
-        'About': "# AI NUTRITION HUB\nDesigned by Birbas. The best AI tool for personalized nutrition and workout plans."
-    }
+    layout="wide"
 )
 
-# --- FIREBASE CONFIG ---
+# Επαλήθευση ιδιοκτησίας Google
+st.markdown('<meta name="google-site-verification" content="swSdGZxobI8CS_1mu9oVQkRuoMwxBidSdhGY3T" />', unsafe_allow_html=True)
+
+# --- FIREBASE CONFIG (Διορθωμένο για να μην βγάζει KeyError) ---
 firebase_config = {
     "apiKey": "AIzaSyCjYgrcFDBwx4CZtEt-bTFrAFdX1D64pMQ",
     "authDomain": "ai-nutrition-hub.firebaseapp.com",
@@ -54,35 +54,31 @@ languages = {
     }
 }
 
-extra_langs = ["Spanish", "French", "German", "Italian", "Portuguese", "Russian", "Arabic", "Turkish"]
+extra_langs = ["Spanish", "French", "German", "Italian", "Portuguese", "Russian", "Arabic", "Turkish", "Chinese", "Japanese"]
 all_options = list(languages.keys()) + extra_langs
 
-# --- SIDEBAR ---
+# --- SIDEBAR: ΑΝΑΖΗΤΗΣΗ ΓΛΩΣΣΑΣ ---
 st.sidebar.markdown("### 🌐 Language / Γλώσσα")
 sel_lang = st.sidebar.selectbox("Search language...", all_options, index=0)
 t = languages.get(sel_lang, languages["English"])
 
 if 'user' not in st.session_state: st.session_state.user = None
 
-# --- AUTHENTICATION ---
+# --- SIDEBAR AUTH ---
 st.sidebar.title(t["log_sign"])
 if st.session_state.user is None:
     choice = st.sidebar.radio("Menu", [t["btn_login"], t["btn_signup"]])
     email = st.sidebar.text_input("Email")
     password = st.sidebar.text_input("Password", type="password")
-    if choice == t["btn_signup"]:
-        if st.sidebar.button(t["btn_signup"]):
-            try:
+    if st.sidebar.button(choice):
+        try:
+            if choice == t["btn_signup"]:
                 auth.create_user_with_email_and_password(email, password)
-                st.sidebar.success("Success! Now Login.")
-            except Exception as e: st.sidebar.error(f"Error: {e}")
-    else:
-        if st.sidebar.button(t["btn_login"]):
-            try:
-                user = auth.sign_in_with_email_and_password(email, password)
-                st.session_state.user = user
+                st.sidebar.success("Done! Login now.")
+            else:
+                st.session_state.user = auth.sign_in_with_email_and_password(email, password)
                 st.rerun()
-            except: st.sidebar.error("Check credentials.")
+        except Exception as e: st.sidebar.error(f"Error: {e}")
 else:
     st.sidebar.write(f"✅ {t['welcome']}: {st.session_state.user['email']}")
     if st.sidebar.button(t["logout"]):
@@ -107,12 +103,12 @@ if st.session_state.user:
         
     if st.button(t["btn_plan"]):
         with st.spinner(t["wait"]):
-            prompt = f"Diet plan for {gender}, {weight}kg, {height}cm. Goal: {goal}. Workout: {workout}. Respond strictly in {sel_lang}."
+            prompt = f"Diet plan for {gender}, {weight}kg, {height}cm. Goal: {goal}. Workout: {workout}. Respond in {sel_lang}."
             try:
                 res = g4f.ChatCompletion.create(model=g4f.models.default, messages=[{"role": "user", "content": prompt}])
                 st.markdown("---")
                 st.markdown(res)
-            except Exception as e: st.error(f"Error: {e}")
+            except: st.error("AI Busy.")
 else:
     st.info(t["warn"])
 
