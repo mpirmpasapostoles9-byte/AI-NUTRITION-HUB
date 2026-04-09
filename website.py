@@ -2,7 +2,7 @@ import streamlit as st
 import g4f
 import pyrebase
 
-# --- ΔΙΟΡΘΩΜΕΝΟ CONFIG (Για να μην βγάζει KeyError) ---
+# --- FIREBASE CONFIG (Διορθωμένο για να αποφύγουμε το KeyError) ---
 firebase_config = {
     "apiKey": "AIzaSyCjYgrcFDBwx4CZtEt-bTFrAFdX1D64pMQ",
     "authDomain": "ai-nutrition-hub.firebaseapp.com",
@@ -10,13 +10,13 @@ firebase_config = {
     "storageBucket": "ai-nutrition-hub.firebasestorage.app",
     "messagingSenderId": "955664360747",
     "appId": "1:955664360747:web:01794faf60b5001886916e",
-    "databaseURL": "" # Το αφήνουμε κενό αλλά ΠΡΕΠΕΙ να υπάρχει ως κλειδί
+    "databaseURL": "" # Πρέπει να υπάρχει ως κλειδί, έστω και κενό
 }
 
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
 
-# --- ΠΛΗΡΕΣ ΛΕΞΙΚΟ ΓΛΩΣΣΩΝ ---
+# --- ΠΛΗΡΕΣ ΛΕΞΙΚΟ ΓΙΑ ΕΛΛΗΝΙΚΑ & ΑΓΓΛΙΚΑ ---
 languages = {
     "Ελληνικά": {
         "log_sign": "🔐 Σύνδεση / Εγγραφή", "btn_login": "Σύνδεση", "btn_signup": "Εγγραφή",
@@ -44,22 +44,25 @@ languages = {
     }
 }
 
-# Λίστα για την αναζήτηση (πρόσθεσε όσες θες, θα παίρνουν το English UI ως βάση)
-extra_langs = ["Spanish", "French", "German", "Italian", "Russian", "Arabic", "Turkish"]
+# Λίστα για την αναζήτηση (Extra γλώσσες που χρησιμοποιούν το English UI ως βάση)
+extra_langs = [
+    "Spanish", "French", "German", "Italian", "Portuguese", "Russian", "Arabic", 
+    "Turkish", "Chinese", "Japanese", "Dutch", "Swedish", "Polish", "Norwegian"
+]
 all_options = list(languages.keys()) + extra_langs
 
 st.set_page_config(page_title="AI NUTRITION HUB", page_icon="🥗", layout="wide")
 
-# --- ΑΝΑΖΗΤΗΣΗ ΓΛΩΣΣΑΣ ---
+# --- SIDEBAR: ΑΝΑΖΗΤΗΣΗ ΓΛΩΣΣΑΣ ---
 st.sidebar.markdown("### 🌐 Language / Γλώσσα")
 sel_lang = st.sidebar.selectbox("Search language...", all_options, index=0)
 
-# Επιλογή μετάφρασης (Αν δεν είναι Ελληνικά, βάλε Αγγλικά στο UI)
+# Επιλογή μετάφρασης UI
 t = languages.get(sel_lang, languages["English"])
 
 if 'user' not in st.session_state: st.session_state.user = None
 
-# --- SIDEBAR AUTH ---
+# --- SIDEBAR AUTHENTICATION ---
 st.sidebar.title(t["log_sign"])
 if st.session_state.user is None:
     choice = st.sidebar.radio("Menu", [t["btn_login"], t["btn_signup"]])
@@ -86,7 +89,8 @@ else:
 
 # --- MAIN APP ---
 st.title("🥗 AI NUTRITION HUB")
-st.subheader(f"Professional Analysis | Language: {sel_lang}")
+# Εδώ μπήκε το όνομά σου στην κορυφή όπως το ζήτησες!
+st.subheader(f"Professional Analysis by Birbas | 🌐 {sel_lang}")
 
 if st.session_state.user:
     col1, col2 = st.columns(2)
@@ -102,6 +106,7 @@ if st.session_state.user:
         
     if st.button(t["btn_plan"]):
         with st.spinner(t["wait"]):
+            # Η AI θα απαντάει στη γλώσσα που επιλέχθηκε από την αναζήτηση
             prompt = f"Diet plan for {gender}, {weight}kg, {height}cm. Goal: {goal}. Workout: {workout}. Respond strictly in {sel_lang}."
             try:
                 res = g4f.ChatCompletion.create(model=g4f.models.default, messages=[{"role": "user", "content": prompt}])
@@ -110,3 +115,6 @@ if st.session_state.user:
             except Exception as e: st.error(f"Error: {e}")
 else:
     st.info(t["warn"])
+
+st.markdown("---")
+st.caption(f"© 2026 AI NUTRITION HUB | Powered by Birbas")
