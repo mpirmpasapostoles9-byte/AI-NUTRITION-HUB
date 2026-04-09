@@ -10,10 +10,10 @@ st.set_page_config(
     layout="wide"
 )
 
-# Εδώ μπήκε ο κωδικός που μου έστειλες για τη Google
+# Ο ΝΕΟΣ ΚΩΔΙΚΟΣ GOOGLE ΠΟΥ ΜΟΥ ΕΣΤΕΙΛΕΣ
 components.html(
     """
-    <meta name="google-site-verification" content="swSdGZxobI8CS_1mu9oVQkRuoMWxBidSdhGY3TNoAaM" />
+    <meta name="google-site-verification" content="swSdGZxobl8CS_lmu9oVQkRuoMWxBidSdhGY3TNoAaM" />
     """,
     height=0,
 )
@@ -63,7 +63,7 @@ languages = {
 extra_langs = ["Spanish", "French", "German", "Italian", "Portuguese", "Russian", "Arabic", "Turkish", "Chinese", "Japanese"]
 all_options = list(languages.keys()) + extra_langs
 
-# --- SIDEBAR: ΑΝΑΖΗΤΗΣΗ ΓΛΩΣΣΑΣ ---
+# --- SIDEBAR: ΓΛΩΣΣΑ ---
 st.sidebar.markdown("### 🌐 Language / Γλώσσα")
 sel_lang = st.sidebar.selectbox("Search language...", all_options, index=0)
 t = languages.get(sel_lang, languages["English"])
