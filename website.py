@@ -2,20 +2,17 @@ import streamlit as st
 import g4f
 import pyrebase
 
-# --- 1. SEO & PAGE CONFIG (Για να σε βρίσκει η Google) ---
+# --- SEO CONFIG (Αυτό διαβάζει η Google) ---
 st.set_page_config(
-    page_title="AI NUTRITION HUB | Professional Analysis by Birbas",
+    page_title="AI NUTRITION HUB | Birbas Professional Analysis",
     page_icon="🥗",
     layout="wide",
-    initial_sidebar_state="expanded",
     menu_items={
-        'Get Help': None,
-        'Report a bug': None,
-        'About': "# AI NUTRITION HUB\nProfessional Nutrition Analysis by Birbas. Get your personalized diet and workout plan using advanced AI technology."
+        'About': "# AI NUTRITION HUB\nDesigned by Birbas. The best AI tool for personalized nutrition and workout plans."
     }
 )
 
-# --- 2. FIREBASE CONFIG ---
+# --- FIREBASE CONFIG ---
 firebase_config = {
     "apiKey": "AIzaSyCjYgrcFDBwx4CZtEt-bTFrAFdX1D64pMQ",
     "authDomain": "ai-nutrition-hub.firebaseapp.com",
@@ -29,7 +26,7 @@ firebase_config = {
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
 
-# --- 3. ΛΕΞΙΚΟ ΓΛΩΣΣΩΝ ---
+# --- ΛΕΞΙΚΟ ΓΛΩΣΣΩΝ ---
 languages = {
     "Ελληνικά": {
         "log_sign": "🔐 Σύνδεση / Εγγραφή", "btn_login": "Σύνδεση", "btn_signup": "Εγγραφή",
@@ -60,14 +57,14 @@ languages = {
 extra_langs = ["Spanish", "French", "German", "Italian", "Portuguese", "Russian", "Arabic", "Turkish"]
 all_options = list(languages.keys()) + extra_langs
 
-# --- 4. SIDEBAR: ΕΠΙΛΟΓΗ ΓΛΩΣΣΑΣ ---
+# --- SIDEBAR ---
 st.sidebar.markdown("### 🌐 Language / Γλώσσα")
 sel_lang = st.sidebar.selectbox("Search language...", all_options, index=0)
 t = languages.get(sel_lang, languages["English"])
 
 if 'user' not in st.session_state: st.session_state.user = None
 
-# --- 5. AUTHENTICATION ---
+# --- AUTHENTICATION ---
 st.sidebar.title(t["log_sign"])
 if st.session_state.user is None:
     choice = st.sidebar.radio("Menu", [t["btn_login"], t["btn_signup"]])
@@ -92,7 +89,7 @@ else:
         st.session_state.user = None
         st.rerun()
 
-# --- 6. MAIN APP ---
+# --- MAIN APP ---
 st.title("🥗 AI NUTRITION HUB")
 st.subheader(f"Professional Analysis by Birbas | 🌐 {sel_lang}")
 
