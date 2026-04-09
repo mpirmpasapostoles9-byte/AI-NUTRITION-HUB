@@ -76,7 +76,7 @@ if user_email and user_password == "APO123":
                 st.markdown(response)
                 st.download_button("📥 Download Plan", response, f"athlete_plan_{user_email}.txt")
                 st.markdown("---")
-st.caption("© 2024 AI NUTRITION HUB | Powered by Birbas")
+                st.caption("© 2024 AI NUTRITION HUB | Powered by Birbas")
             except Exception as e:
                 st.error(f"Error: {e}")
 else:
