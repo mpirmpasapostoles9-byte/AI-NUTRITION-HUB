@@ -1,7 +1,7 @@
 import streamlit as st
 import g4f
 
-st.set_page_config(page_title="Apostolis AI Elite", page_icon="📅", layout="wide")
+st.set_page_config(page_title="AI NUTRITION HUB", page_icon="🥗", layout="wide")
 
 # --- SIDEBAR & ΓΛΩΣΣΑ ---
 with st.sidebar:
@@ -42,7 +42,7 @@ with st.sidebar:
     budget = st.select_slider(t_budget, options=["10€-30€", "30€-50€", "50€-80€", "80€-120€", "120€+"])
 
 # --- ΚΥΡΙΩΣ ΣΕΛΙΔΑ ---
-st.title("🏅 Apostolis AI: Elite Nutrition Hub")
+st.title("🥗 AI NUTRITION HUB")
 
 if user_email and user_password == "APO123":
     if st.button(t_button):
@@ -75,6 +75,8 @@ if user_email and user_password == "APO123":
                 st.markdown("---")
                 st.markdown(response)
                 st.download_button("📥 Download Plan", response, f"athlete_plan_{user_email}.txt")
+                st.markdown("---")
+st.caption("© 2024 AI NUTRITION HUB | Powered by Birbas")
             except Exception as e:
                 st.error(f"Error: {e}")
 else:
