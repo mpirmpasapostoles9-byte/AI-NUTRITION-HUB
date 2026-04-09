@@ -1,143 +1,113 @@
 import streamlit as st
 import g4f
+import pyrebase
 
-# 1. ΠΛΗΡΕΣ ΛΕΞΙΚΟ ΓΙΑ 100% ΚΑΘΑΡΗ ΓΛΩΣΣΑ
+# --- FIREBASE CONFIG (Από τη φωτό σου) ---
+firebase_config = {
+    "apiKey": "AIzaSyCjYgrcFDBwx4CZtEt-bTFrAFdX1D64pMQ",
+    "authDomain": "ai-nutrition-hub.firebaseapp.com",
+    "projectId": "ai-nutrition-hub",
+    "storageBucket": "ai-nutrition-hub.firebasestorage.app",
+    "messagingSenderId": "955664360747",
+    "appId": "1:955664360747:web:01794faf60b5001886916e",
+    "databaseURL": "" 
+}
+
+firebase = pyrebase.initialize_app(firebase_config)
+auth = firebase.auth()
+
+# --- ΛΕΞΙΚΟ ΓΛΩΣΣΩΝ ---
 languages = {
     "Ελληνικά": {
         "title": "🥗 AI NUTRITION HUB",
-        "sub": "Επαγγελματική Ανάλυση Διατροφής από τον Birbas",
-        "login": "🔐 Είσοδος",
-        "welcome": "Καλώς ήρθες",
-        "gender": "Φύλο",
-        "age": "Ηλικία",
-        "weight": "Βάρος (kg)",
-        "height": "Ύψος (cm)",
-        "activity": "Γενική Δραστηριότητα",
-        "workout": "Περιγράψτε τα αθλήματα/προπονήσεις σας",
-        "workout_ex": "π.χ. Ποδόσφαιρο 2 φορές την εβδομάδα, Γυμναστήριο 3 φορές",
-        "goal": "Στόχος",
-        "other_goal": "Γράψτε τον δικό σας στόχο",
-        "med": "Αλλεργίες ή Ιατρικά Θέματα",
-        "med_ex": "Κανένα",
-        "lang_sel": "Γλώσσα",
-        "btn": "🚀 Δημιουργία Επαγγελματικού Πλάνου",
-        "wait": "Η AI αναλύει τα δεδομένα σας...",
-        "warning": "Παρακαλώ εισάγετε το Email και τον Κωδικό σας αριστερά.",
-        "download": "💾 Λήψη Πλάνου (PDF/Text)",
-        "goals": ["Απώλεια Βάρους", "Απώλεια Βάρους με Αύξηση Μυϊκής Μάζας", "Συντήρηση", "Χάσιμο Λίπους", "Αύξηση Μυϊκής Μάζας", "Lean Bulk (Καθαρή Αύξηση)", "Άλλο (Γράψτε παρακάτω)"]
+        "sub": "Επαγγελματική Ανάλυση από Birbas",
+        "log_sign": "🔐 Σύνδεση / Εγγραφή",
+        "email": "Email", "pass": "Κωδικός",
+        "btn_login": "Σύνδεση", "btn_signup": "Εγγραφή νέου χρήστη",
+        "welcome": "Καλώς ήρθες", "logout": "Αποσύνδεση",
+        "gender": "Φύλο", "age": "Ηλικία", "weight": "Βάρος (kg)", "height": "Ύψος (cm)",
+        "activity": "Δραστηριότητα", "workout": "Προπονήσεις", "goal": "Στόχος",
+        "med": "Αλλεργίες", "btn_plan": "🚀 Δημιουργία Πλάνου",
+        "goals": ["Απώλεια Βάρους", "Απώλεια με Μυϊκή Μάζα", "Συντήρηση", "Χάσιμο Λίπους", "Αύξηση Μάζας", "Lean Bulk", "Άλλο"]
     },
     "English": {
         "title": "🥗 AI NUTRITION HUB",
-        "sub": "Professional Nutrition Analysis by Birbas",
-        "login": "🔐 Login",
-        "welcome": "Welcome",
-        "gender": "Gender",
-        "age": "Age",
-        "weight": "Weight (kg)",
-        "height": "Height (cm)",
-        "activity": "Activity Level",
-        "workout": "Describe your sports/workouts",
-        "workout_ex": "e.g. Football 2x week, Gym 3x week",
-        "goal": "Goal",
-        "other_goal": "Write your custom goal",
-        "med": "Allergies or Medical Issues",
-        "med_ex": "None",
-        "lang_sel": "Language",
-        "btn": "🚀 Create Professional Plan",
-        "wait": "AI is analyzing your data...",
-        "warning": "Please enter your Email and Password on the left sidebar.",
-        "download": "💾 Download Plan",
-        "goals": ["Weight Loss", "Weight Loss with Muscle Gain", "Maintenance", "Fat Loss", "Muscle Gain", "Lean Bulk", "Other (Write below)"]
+        "sub": "Professional Analysis by Birbas",
+        "log_sign": "🔐 Login / Sign Up",
+        "email": "Email", "pass": "Password",
+        "btn_login": "Login", "btn_signup": "Sign Up",
+        "welcome": "Welcome", "logout": "Logout",
+        "gender": "Gender", "age": "Age", "weight": "Weight (kg)", "height": "Height (cm)",
+        "activity": "Activity", "workout": "Workouts", "goal": "Goal",
+        "med": "Allergies", "btn_plan": "🚀 Create Plan",
+        "goals": ["Weight Loss", "Weight Loss with Muscle Gain", "Maintenance", "Fat Loss", "Muscle Gain", "Lean Bulk", "Other"]
     }
 }
 
 st.set_page_config(page_title="AI NUTRITION HUB", page_icon="🥗", layout="wide")
-
-# Επιλογή Γλώσσας
-sel_lang = st.sidebar.selectbox("🌐 Language / Γλώσσα", ["Ελληνικά", "English"])
+sel_lang = st.sidebar.selectbox("🌐 Language", ["Ελληνικά", "English"])
 t = languages[sel_lang]
 
-# Sidebar Login
-st.sidebar.title(t["login"])
-email = st.sidebar.text_input("Email")
-password = st.sidebar.text_input("Password", type="password")
+# --- AUTH LOGIC ---
+if 'user' not in st.session_state:
+    st.session_state.user = None
 
-def generate_plan(gender, age, weight, height, activity_level, workout_desc, final_goal, medical_history, lang_name):
-    # Υπολογισμοί
-    if "Άνδρας" in gender or "Male" in gender:
-        bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5
+st.sidebar.title(t["log_sign"])
+if st.session_state.user is None:
+    choice = st.sidebar.radio("Menu", [t["btn_login"], t["btn_signup"]])
+    email = st.sidebar.text_input(t["email"])
+    password = st.sidebar.text_input(t["pass"], type="password")
+
+    if choice == t["btn_signup"]:
+        if st.sidebar.button(t["btn_signup"]):
+            try:
+                user = auth.create_user_with_email_and_password(email, password)
+                st.sidebar.success("Ο λογαριασμός δημιουργήθηκε! Κάνε Login.")
+            except:
+                st.sidebar.error("Η εγγραφή απέτυχε. Δες αν το email είναι σωστό.")
     else:
-        bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161
+        if st.sidebar.button(t["btn_login"]):
+            try:
+                user = auth.sign_in_with_email_and_password(email, password)
+                st.session_state.user = user
+                st.rerun()
+            except:
+                st.sidebar.error("Λάθος Email ή Κωδικός.")
+else:
+    st.sidebar.write(f"✅ {t['welcome']}: {st.session_state.user['email']}")
+    if st.sidebar.button(t["logout"]):
+        st.session_state.user = None
+        st.rerun()
 
-    mult = 1.2
-    if "Active" in activity_level or "Ελαφριά" in activity_level: mult = 1.375
-    if "Moderately" in activity_level or "Μέτρια" in activity_level: mult = 1.55
-    if "Very" in activity_level or "Έντονη" in activity_level: mult = 1.725
-    if "Extra" in activity_level or "Πολύ Έντονη" in activity_level: mult = 1.9
-    
-    tdee = bmr * mult
-    target_calories = tdee
-    if any(x in final_goal for x in ["Loss", "Απώλεια", "Χάσιμο", "Fat"]): target_calories = tdee - 500
-    elif any(x in final_goal for x in ["Gain", "Αύξηση", "Bulk"]): target_calories = tdee + 400
-
-    prompt = f"""
-    Role: Professional Nutritionist. Target: {target_calories:.0f} kcal.
-    User: {gender}, {age}yo, {weight}kg, {height}cm.
-    Activity: {activity_level}. Workout Details: {workout_desc}.
-    Goal: {final_goal}. Allergies: {medical_history}.
-    Provide a detailed 7-day meal plan with macros and shopping list.
-    Language: Strictly in {lang_name}.
-    """
-
-    try:
-        response = g4f.ChatCompletion.create(model=g4f.models.default, messages=[{"role": "user", "content": prompt}])
-        return response, bmr, tdee, target_calories
-    except Exception as e:
-        return f"Error: {e}", 0, 0, 0
-
-# --- UI ---
+# --- MAIN APP ---
 st.title(t["title"])
 st.subheader(t["sub"])
 
-if email and password == "APO123":
-    st.success(f"{t['welcome']}, {email}!")
+if st.session_state.user:
     col1, col2 = st.columns(2)
-    
     with col1:
-        gender_opt = ["Άνδρας (Male)", "Γυναίκα (Female)"] if sel_lang == "Ελληνικά" else ["Male", "Female"]
-        gender = st.selectbox(t["gender"], gender_opt)
-        age = st.number_input(t["age"], min_value=10, max_value=100, value=25)
-        weight = st.number_input(t["weight"], min_value=30, max_value=250, value=75)
-        height = st.number_input(t["height"], min_value=100, max_value=250, value=175)
-
+        gender = st.selectbox(t["gender"], ["Male", "Female"])
+        age = st.number_input(t["age"], 10, 100, 25)
+        weight = st.number_input(t["weight"], 30, 250, 75)
+        height = st.number_input(t["height"], 100, 250, 175)
     with col2:
-        activity_opt = [
-            "Καθιστική (Sedentary)", "Ελαφριά (Lightly Active)", 
-            "Μέτρια (Moderately Active)", "Έντονη (Very Active)", "Πολύ Έντονη (Extra Active)"
-        ]
-        activity_level = st.selectbox(t["activity"], activity_opt)
-        goal_selection = st.selectbox(t["goal"], t["goals"])
-        
-        final_goal = goal_selection
-        if "Άλλο" in goal_selection or "Other" in goal_selection:
-            final_goal = st.text_input(t["other_goal"])
-            
-        workout_desc = st.text_area(t["workout"], value=t["workout_ex"])
-        medical_history = st.text_area(t["med"], value=t["med_ex"])
+        activity = st.selectbox(t["activity"], ["Sedentary", "Light", "Moderate", "Very Active"])
+        goal = st.selectbox(t["goal"], t["goals"])
+        workout = st.text_area(t["workout"], "e.g. Gym 3x week")
+        med = st.text_area(t["med"], "None")
 
-    if st.button(t["btn"]):
-        with st.spinner(t["wait"]):
-            result, bmr_val, tdee_val, target_val = generate_plan(gender, age, weight, height, activity_level, workout_desc, final_goal, medical_history, sel_lang)
-            st.markdown("---")
-            c1, c2, c3 = st.columns(3)
-            c1.metric("BMR", f"{bmr_val:.0f} kcal")
-            c2.metric("TDEE", f"{tdee_val:.0f} kcal")
-            c3.metric(t["goal"], f"{target_val:.0f} kcal")
-            st.markdown("---")
-            st.markdown(result)
-            st.download_button(t["download"], result, file_name="nutrition_plan.md")
+    if st.button(t["btn_plan"]):
+        with st.spinner("Analyzing..."):
+            # Εδώ καλούμε την AI (όπως στον προηγούμενο κώδικα)
+            prompt = f"Diet plan for {gender}, {weight}kg, goal: {goal}, workout: {workout}. Language: {sel_lang}"
+            try:
+                res = g4f.ChatCompletion.create(model=g4f.models.default, messages=[{"role": "user", "content": prompt}])
+                st.markdown("---")
+                st.markdown(res)
+            except Exception as e:
+                st.error(f"AI Error: {e}")
 else:
-    st.warning(t["warning"])
+    st.info("👋 " + t["warning"] if "warning" in t else "Please Login to continue.")
 
 st.markdown("---")
-st.caption(f"© 2026 AI NUTRITION HUB | Powered by Birbas")
+st.caption("© 2026 AI NUTRITION HUB | Powered by Birbas")
