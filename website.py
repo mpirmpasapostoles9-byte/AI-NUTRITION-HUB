@@ -2,7 +2,7 @@ import streamlit as st
 import g4f
 import pyrebase
 
-# --- ΔΙΟΡΘΩΜΕΝΟ FIREBASE CONFIG (Με databaseURL για να μην βγάζει error) ---
+# --- ΔΙΟΡΘΩΜΕΝΟ CONFIG (Για να μην βγάζει KeyError) ---
 firebase_config = {
     "apiKey": "AIzaSyCjYgrcFDBwx4CZtEt-bTFrAFdX1D64pMQ",
     "authDomain": "ai-nutrition-hub.firebaseapp.com",
@@ -10,92 +10,103 @@ firebase_config = {
     "storageBucket": "ai-nutrition-hub.firebasestorage.app",
     "messagingSenderId": "955664360747",
     "appId": "1:955664360747:web:01794faf60b5001886916e",
-    "databaseURL": "https://ai-nutrition-hub.firebaseio.com" # Προστέθηκε για το σφάλμα
+    "databaseURL": "" # Το αφήνουμε κενό αλλά ΠΡΕΠΕΙ να υπάρχει ως κλειδί
 }
 
 firebase = pyrebase.initialize_app(firebase_config)
 auth = firebase.auth()
 
-# --- ΛΙΣΤΑ 100+ ΓΛΩΣΣΩΝ ---
-all_languages = [
-    "Greek", "English", "Spanish", "French", "German", "Italian", "Chinese", "Japanese", "Russian", "Arabic",
-    "Portuguese", "Dutch", "Swedish", "Turkish", "Korean", "Polish", "Norwegian", "Danish", "Finnish", "Hindi",
-    "Albanian", "Bulgarian", "Croatian", "Czech", "Estonian", "Georgian", "Hebrew", "Hungarian", "Indonesian",
-    "Irish", "Latin", "Latvian", "Lithuanian", "Malay", "Maltese", "Persian", "Romanian", "Serbian", "Slovak",
-    "Slovenian", "Thai", "Ukrainian", "Vietnamese", "Welsh"
-]
-
-st.set_page_config(page_title="AI NUTRITION HUB", layout="wide")
-
-# --- SEARCHABLE LANGUAGE SELECTOR ---
-st.sidebar.title("🌐 Global Settings")
-sel_lang = st.sidebar.selectbox("Search & Select Language", all_languages, index=0)
-
-# --- AI UI TRANSLATOR ---
-# Αυτή η λειτουργία μεταφράζει τα κουμπιά του site αυτόματα!
-@st.cache_data
-def translate_ui(target_lang):
-    if target_lang == "Greek":
-        return {
-            "title": "🥗 AI NUTRITION HUB", "sub": "Επαγγελματική Ανάλυση",
-            "btn_plan": "🚀 Δημιουργία Πλάνου", "login": "Σύνδεση", "signup": "Εγγραφή",
-            "gender": "Φύλο", "age": "Ηλικία", "weight": "Βάρος", "height": "Ύψος",
-            "goal": "Στόχος", "workout": "Προπονήσεις", "logout": "Αποσύνδεση"
-        }
-    # Για όλες τις άλλες γλώσσες, ζητάμε από την AI να μας δώσει τους τίτλους
-    return {
-        "title": "🥗 AI NUTRITION HUB", "sub": f"Analysis in {target_lang}",
-        "btn_plan": "🚀 Generate Plan", "login": "Login", "signup": "Sign Up",
-        "gender": "Gender", "age": "Age", "weight": "Weight", "height": "Height",
-        "goal": "Goal", "workout": "Workouts", "logout": "Logout"
+# --- ΠΛΗΡΕΣ ΛΕΞΙΚΟ ΓΛΩΣΣΩΝ ---
+languages = {
+    "Ελληνικά": {
+        "log_sign": "🔐 Σύνδεση / Εγγραφή", "btn_login": "Σύνδεση", "btn_signup": "Εγγραφή",
+        "welcome": "Καλώς ήρθες", "logout": "Αποσύνδεση",
+        "gender": "Φύλο", "age": "Ηλικία", "weight": "Βάρος (kg)", "height": "Ύψος (cm)",
+        "activity": "Δραστηριότητα", "goal": "Στόχος", "workout": "Προπονήσεις",
+        "btn_plan": "🚀 Δημιουργία Πλάνου", "wait": "Η AI αναλύει...",
+        "gender_ops": ["Άνδρας", "Γυναίκα"],
+        "activity_ops": ["Καθιστική", "Ελαφριά", "Μέτρια", "Έντονη", "Πολύ Έντονη"],
+        "goals": ["Απώλεια Βάρους", "Αύξηση Μάζας", "Συντήρηση", "Γράμμωση", "Lean Bulk", "Άλλο"],
+        "workout_ex": "π.χ. Γυμναστήριο 3 φορές την εβδομάδα",
+        "warn": "Παρακαλώ συνδεθείτε για να συνεχίσετε."
+    },
+    "English": {
+        "log_sign": "🔐 Login / Sign Up", "btn_login": "Login", "btn_signup": "Sign Up",
+        "welcome": "Welcome", "logout": "Logout",
+        "gender": "Gender", "age": "Age", "weight": "Weight (kg)", "height": "Height (cm)",
+        "activity": "Activity", "goal": "Goal", "workout": "Workouts",
+        "btn_plan": "🚀 Create Plan", "wait": "AI is analyzing...",
+        "gender_ops": ["Male", "Female"],
+        "activity_ops": ["Sedentary", "Lightly Active", "Moderately Active", "Very Active", "Extra Active"],
+        "goals": ["Weight Loss", "Muscle Gain", "Maintenance", "Fat Loss", "Lean Bulk", "Other"],
+        "workout_ex": "e.g. Gym 3x week",
+        "warn": "Please Login to continue."
     }
+}
 
-t = translate_ui(sel_lang)
+# Λίστα για την αναζήτηση (πρόσθεσε όσες θες, θα παίρνουν το English UI ως βάση)
+extra_langs = ["Spanish", "French", "German", "Italian", "Russian", "Arabic", "Turkish"]
+all_options = list(languages.keys()) + extra_langs
 
-# --- AUTH LOGIC ---
+st.set_page_config(page_title="AI NUTRITION HUB", page_icon="🥗", layout="wide")
+
+# --- ΑΝΑΖΗΤΗΣΗ ΓΛΩΣΣΑΣ ---
+st.sidebar.markdown("### 🌐 Language / Γλώσσα")
+sel_lang = st.sidebar.selectbox("Search language...", all_options, index=0)
+
+# Επιλογή μετάφρασης (Αν δεν είναι Ελληνικά, βάλε Αγγλικά στο UI)
+t = languages.get(sel_lang, languages["English"])
+
 if 'user' not in st.session_state: st.session_state.user = None
 
+# --- SIDEBAR AUTH ---
+st.sidebar.title(t["log_sign"])
 if st.session_state.user is None:
-    choice = st.sidebar.radio("Menu", [t["login"], t["signup"]])
+    choice = st.sidebar.radio("Menu", [t["btn_login"], t["btn_signup"]])
     email = st.sidebar.text_input("Email")
     password = st.sidebar.text_input("Password", type="password")
-    if st.sidebar.button(choice):
-        try:
-            if choice == t["signup"]:
+    if choice == t["btn_signup"]:
+        if st.sidebar.button(t["btn_signup"]):
+            try:
                 auth.create_user_with_email_and_password(email, password)
-                st.sidebar.success("Account created! Now Login.")
-            else:
-                st.session_state.user = auth.sign_in_with_email_and_password(email, password)
+                st.sidebar.success("Επιτυχία! Κάντε Login.")
+            except Exception as e: st.sidebar.error(f"Error: {e}")
+    else:
+        if st.sidebar.button(t["btn_login"]):
+            try:
+                user = auth.sign_in_with_email_and_password(email, password)
+                st.session_state.user = user
                 st.rerun()
-        except Exception as e: st.sidebar.error(f"Error: {e}")
+            except: st.sidebar.error("Λάθος στοιχεία.")
 else:
-    st.sidebar.write(f"✅ {st.session_state.user['email']}")
+    st.sidebar.write(f"✅ {t['welcome']}: {st.session_state.user['email']}")
     if st.sidebar.button(t["logout"]):
         st.session_state.user = None
         st.rerun()
 
-# --- MAIN PAGE ---
-st.title(t["title"])
-st.subheader(t["sub"])
+# --- MAIN APP ---
+st.title("🥗 AI NUTRITION HUB")
+st.subheader(f"Professional Analysis | Language: {sel_lang}")
 
 if st.session_state.user:
     col1, col2 = st.columns(2)
     with col1:
-        st.selectbox(t["gender"], ["Male", "Female", "Other"])
-        st.number_input(t["age"], 10, 100, 25)
-        st.number_input(t["weight"], 30, 250, 75)
+        gender = st.selectbox(t["gender"], t["gender_ops"])
+        age = st.number_input(t["age"], 10, 100, 25)
+        weight = st.number_input(t["weight"], 30, 250, 75)
+        height = st.number_input(t["height"], 100, 250, 175)
     with col2:
-        st.number_input(t["height"], 100, 250, 175)
-        st.text_input(t["goal"])
-        st.text_area(t["workout"])
-
+        activity = st.selectbox(t["activity"], t["activity_ops"])
+        goal = st.selectbox(t["goal"], t["goals"])
+        workout = st.text_area(t["workout"], t["workout_ex"])
+        
     if st.button(t["btn_plan"]):
-        with st.spinner("AI Processing..."):
-            prompt = f"Create a full nutrition plan in {sel_lang}. Use professional tone."
+        with st.spinner(t["wait"]):
+            prompt = f"Diet plan for {gender}, {weight}kg, {height}cm. Goal: {goal}. Workout: {workout}. Respond strictly in {sel_lang}."
             try:
                 res = g4f.ChatCompletion.create(model=g4f.models.default, messages=[{"role": "user", "content": prompt}])
                 st.markdown("---")
-                st.write(res)
-            except: st.error("AI is busy.")
+                st.markdown(res)
+            except Exception as e: st.error(f"Error: {e}")
 else:
-    st.info("Please login to continue.")
+    st.info(t["warn"])
