@@ -4,18 +4,19 @@ import g4f
 # 1. Ρύθμιση Σελίδας
 st.set_page_config(page_title="AI NUTRITION HUB", page_icon="🥗", layout="wide")
 
-# 2. Sidebar για Είσοδο (Προσωρινό Login μέχρι το Firebase)
+# 2. Sidebar για Είσοδο
 st.sidebar.title("🔐 Login")
 email = st.sidebar.text_input("Email")
 password = st.sidebar.text_input("Password", type="password")
 
-def generate_plan(gender, age, weight, height, activity, goal, medical_history, lang):
+def generate_plan(gender, age, weight, height, activity_level, workout_desc, goal, medical_history, lang):
     # --- ΥΠΟΛΟΓΙΣΜΟΣ ΜΕΤΑΒΟΛΙΣΜΟΥ ---
     if "Άνδρας" in gender or "Male" in gender:
         bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5
     else:
         bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161
 
+    # Υπολογισμός με βάση το επίπεδο δραστηριότητας
     activity_map = {
         "Καθιστική (Sedentary)": 1.2,
         "Ελαφριά (Lightly Active)": 1.375,
@@ -24,7 +25,7 @@ def generate_plan(gender, age, weight, height, activity, goal, medical_history, 
         "Πολύ Έντονη (Extra Active)": 1.9
     }
     
-    multiplier = activity_map.get(activity, 1.2)
+    multiplier = activity_map.get(activity_level, 1.2)
     tdee = bmr * multiplier
     
     if "Απώλεια" in goal:
@@ -34,25 +35,25 @@ def generate_plan(gender, age, weight, height, activity, goal, medical_history, 
     else:
         target_calories = tdee
 
-    # --- ΕΝΙΣΧΥΜΕΝΟ PROMPT ΓΙΑ ΤΗΝ AI ---
+    # --- ΕΝΙΣΧΥΜΕΝΟ PROMPT ΜΕ ΠΡΟΠΟΝΗΣΗ ---
     prompt = f"""
     Είσαι ο κορυφαίος κλινικός διατροφολόγος του AI NUTRITION HUB.
     
-    ΑΝΑΛΥΣΗ ΜΕΤΑΒΟΛΙΣΜΟΥ ΠΕΛΑΤΗ:
-    - Βασικός Μεταβολισμός (BMR): {bmr:.0f} kcal
-    - Θερμίδες Συντήρησης (TDEE): {tdee:.0f} kcal
-    - ΣΤΟΧΟΣ ΗΜΕΡΗΣΙΩΝ ΘΕΡΜΙΔΩΝ: {target_calories:.0f} kcal
+    ΣΤΑΤΙΣΤΙΚΑ ΜΕΤΑΒΟΛΙΣΜΟΥ:
+    - BMR: {bmr:.0f} kcal | TDEE: {tdee:.0f} kcal
+    - ΣΤΟΧΟΣ ΘΕΡΜΙΔΩΝ: {target_calories:.0f} kcal
     
-    ΣΤΟΙΧΕΙΑ ΠΕΛΑΤΗ:
+    ΠΡΟΦΙΛ ΠΕΛΑΤΗ:
     - Φύλο: {gender}, Ηλικία: {age}, Βάρος: {weight}kg, Ύψος: {height}cm.
+    - ΠΡΟΠΟΝΗΣΗ/ΑΘΛΗΜΑΤΑ: {workout_desc}
     - Στόχος: {goal}.
-    - Ιατρικό Ιστορικό/Αλλεργίες: {medical_history}.
+    - Αλλεργίες: {medical_history}.
     
     ΟΔΗΓΙΕΣ:
-    1. Φτιάξε ένα πλήρες πλάνο 7 ημερών βασισμένο ΑΥΣΤΗΡΑ στις {target_calories:.0f} θερμίδες.
-    2. Ανάλυση Πρωτεΐνης, Υδατανθράκων και Λίπους για κάθε γεύμα.
-    3. Συμπερίλαβε μια πλήρη Λίστα Αγορών (Shopping List).
-    4. Απάντησε με επαγγελματικό ύφος στα {lang}.
+    1. Φτιάξε πλάνο 7 ημερών βασισμένο ΑΥΣΤΗΡΑ στις {target_calories:.0f} θερμίδες.
+    2. ΠΡΟΣΑΡΜΟΣΕ τα γεύματα ανάλογα με την προπόνηση ({workout_desc}). Αν έχει έντονη προπόνηση, δώσε έμφαση στην αποκατάσταση.
+    3. Ανάλυση P/C/F και Shopping List.
+    4. Απάντησε στα {lang}.
     """
 
     try:
@@ -80,36 +81,33 @@ if email and password == "APO123":
         height = st.number_input("Ύψος (cm)", min_value=100, max_value=250, value=175)
 
     with col2:
-        activity = st.selectbox("Επίπεδο Δραστηριότητας", [
+        activity_level = st.selectbox("Γενική Δραστηριότητα", [
             "Καθιστική (Sedentary)", 
             "Ελαφριά (Lightly Active)", 
             "Μέτρια (Moderately Active)", 
             "Έντονη (Very Active)", 
             "Πολύ Έντονη (Extra Active)"
         ])
+        workout_desc = st.text_area("Περιγράψτε τα αθλήματα/προπονήσεις σας", "π.χ. Ποδόσφαιρο 3 φορές την εβδομάδα, Βάρη καθημερινά")
         goal = st.selectbox("Στόχος", ["Απώλεια Βάρους", "Συντήρηση", "Αύξηση Μυϊκής Μάζας"])
         medical_history = st.text_area("Αλλεργίες ή Ιατρικά Θέματα", "Κανένα")
         lang = st.selectbox("Γλώσσα Απάντησης", ["Ελληνικά", "English"])
 
     if st.button("🚀 Δημιουργία Επαγγελματικού Πλάνου"):
-        with st.spinner("Γίνεται υπολογισμός μεταβολισμού και σχεδιασμός πλάνου..."):
-            result, bmr_val, tdee_val, target_val = generate_plan(gender, age, weight, height, activity, goal, medical_history, lang)
+        with st.spinner("Γίνεται ανάλυση μεταβολισμού και προπόνησης..."):
+            result, bmr_val, tdee_val, target_val = generate_plan(gender, age, weight, height, activity_level, workout_desc, goal, medical_history, lang)
             
-            # Εμφάνιση Μετρήσεων
             st.markdown("---")
             c1, c2, c3 = st.columns(3)
-            c1.metric("BMR (Μεταβολισμός)", f"{bmr_val:.0f} kcal")
-            c2.metric("TDEE (Συντήρηση)", f"{tdee_val:.0f} kcal")
-            c3.metric("Στόχος Θερμίδων", f"{target_val:.0f} kcal", delta=f"{target_val-tdee_val:.0f}")
+            c1.metric("BMR", f"{bmr_val:.0f} kcal")
+            c2.metric("TDEE", f"{tdee_val:.0f} kcal")
+            c3.metric("Στόχος Θερμίδων", f"{target_val:.0f} kcal")
             
             st.markdown("---")
             st.markdown(result)
-            
             st.download_button("💾 Download Plan", result, file_name="nutrition_plan.md")
-
 else:
     st.warning("Παρακαλώ εισάγετε τα διαπιστευτήριά σας στο μενού αριστερά.")
 
-# Footer
 st.markdown("---")
 st.caption("© 2026 AI NUTRITION HUB | Advanced AI Systems | Powered by Birbas")
